@@ -136,7 +136,7 @@ fun SignUp(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "MySteps2",
+                text = "MySteps",
                 fontSize = 38.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

@@ -37,7 +37,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -52,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import com.example.mysteps.data.CityDto
 import com.example.mysteps.data.SupabaseClient
 import com.example.mysteps.data.VisitedPlaceDto
 import com.example.mysteps.ui.theme.Green_btn
@@ -63,7 +66,8 @@ fun HomePage(
     onNavigateToSearch: () -> Unit,
     onNavigateToMaps: () -> Unit,
     onNavigateToAdd: () -> Unit,
-    onPlaceClick: (Long) -> Unit
+    onPlaceClick: (Long) -> Unit,
+    onLogout: () -> Unit
 ) {
     val context = LocalContext.current
     var places by remember { mutableStateOf<List<VisitedPlaceDto>>(emptyList()) }
@@ -204,6 +208,7 @@ fun PlaceDetailPage(
     val coroutineScope = rememberCoroutineScope()
     var place by remember { mutableStateOf<VisitedPlaceDto?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var cityName by remember { mutableStateOf("Загрузка...") }
     LaunchedEffect(placeId) {
         runCatching {
             SupabaseClient.client.postgrest["visited_places"].select {
@@ -211,6 +216,15 @@ fun PlaceDetailPage(
             }.decodeSingle<VisitedPlaceDto>()
         }.onSuccess { loadedPlace ->
             place = loadedPlace
+            try {
+                val allCities = SupabaseClient.client.postgrest["city"].select().decodeList<CityDto>()
+                val foundCity = allCities.find { it.cityId == loadedPlace.city_id}
+                if (foundCity != null) {
+                    cityName = foundCity.nameCity
+                }
+            } catch (e: Exception){
+                cityName = "Неизвестно"
+            }
             isLoading = false
         }.onFailure {
             Toast.makeText(context, "Ошибка загрузки", Toast.LENGTH_SHORT).show()
@@ -307,7 +321,7 @@ fun PlaceDetailPage(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(currentPlace.title, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                        Text("Якутск", fontSize = 18.sp, color = Color.Gray)
+                        Text(cityName, fontSize = 18.sp, color = Color.Gray)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {

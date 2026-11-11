@@ -1,6 +1,9 @@
 package com.example.mysteps
 
 import android.app.Application
+import com.example.mysteps.data.SupabaseClient
+import io.github.jan.supabase.gotrue.SettingsSessionManager
+import io.github.jan.supabase.gotrue.auth
 import org.osmdroid.config.Configuration
 
 class MyStepsApp : Application() {

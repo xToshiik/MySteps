@@ -56,6 +56,7 @@ import coil.compose.AsyncImage
 import com.example.mysteps.R
 import com.example.mysteps.data.AuthRepository
 import com.example.mysteps.data.CityDto
+import com.example.mysteps.data.GeocoderHelper
 import com.example.mysteps.data.SupabaseClient
 import com.example.mysteps.data.VisitedPlaceDto
 import com.example.mysteps.ui.theme.Green_btn
@@ -82,6 +83,7 @@ fun AddPage(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val repository = remember { AuthRepository() }
+    var isCityLoading by remember { mutableStateOf(false) }
 
     var title by remember { mutableStateOf("") }
     var ratingStr by remember { mutableStateOf("5") }
@@ -105,6 +107,23 @@ fun AddPage(
         }.onSuccess { cities ->
             cityList = cities
             if (cities.isNotEmpty() && selectedCity == null) selectedCity = cities.first()
+        }
+    }
+    LaunchedEffect(lat, lon) {
+        if (lat != 0.0 && lon != 0.0) {
+            isCityLoading = true
+            val detectedCityName = GeocoderHelper.getCityName(lat, lon)
+
+            if (detectedCityName != null) {
+                val cityInDb = cityList.find { it.nameCity.equals(detectedCityName.trim(), ignoreCase = true) }
+
+                if (cityInDb != null) {
+                    selectedCity = cityInDb
+                } else {
+                    Toast.makeText(context, "Город $detectedCityName не найден в базе", Toast.LENGTH_SHORT).show()
+                }
+            }
+            isCityLoading = false
         }
     }
     LaunchedEffect(editPlaceId) {
@@ -138,7 +157,7 @@ fun AddPage(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(modifier = Modifier.padding(0.dp, 10.dp, 10.dp, 0.dp)){
-                    Text(if (editPlaceId == null) "MySteps" else "Редактирование",
+                    Text(if (editPlaceId == null) "MySteps" else "MySteps",
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
